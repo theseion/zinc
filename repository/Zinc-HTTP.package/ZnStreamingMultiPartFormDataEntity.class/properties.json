@@ -1,0 +1,13 @@
+{
+	"commentStamp" : "",
+	"super" : "ZnMultiPartFormDataEntity",
+	"category" : "Zinc-HTTP-Core",
+	"classinstvars" : [ ],
+	"pools" : [ ],
+	"classvars" : [ ],
+	"instvars" : [
+		"stream"
+	],
+	"name" : "ZnStreamingMultiPartFormDataEntity",
+	"type" : "normal"
+}
