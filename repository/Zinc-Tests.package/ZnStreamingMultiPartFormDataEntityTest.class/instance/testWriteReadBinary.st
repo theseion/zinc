@@ -1,6 +1,6 @@
 tests
 testWriteReadBinary
-	| input bytes parts |
+	| input bytes parts entity |
 	input := (ZnStreamingMultiPartFormDataEntity new)
 		addPart: (ZnMimePart fieldName: 'extra' value: 'my-extra');
 		addPart: (ZnMimePart fieldName: 'info' value: 'my-info');
@@ -12,16 +12,24 @@ testWriteReadBinary
 	self assert: (input contentType matches: ZnMimeType multiPartFormData).
 	bytes := ByteArray streamContents: [ :stream | input writeOn: stream ].
 	parts := ZnMultiValueDictionary new.
-	ZnStreamingMultiPartFormDataEntity new
+	entity := ZnStreamingMultiPartFormDataEntity new
 		readBinaryFrom: bytes readStream;
 		contentType: input contentType;
-		partsAndValuesDo: [ :mimePart :value | 
+		yourself.
+	entity
+		partsDecodeWith: [ :znMimePart |
 			parts
-				at: mimePart fieldName
-				add: value ]
-		withCodec: GRNullCodec new.
+				at: znMimePart fieldName
+				put: (znMimePart hasEntity
+					ifTrue: [ znMimePart fieldValueString ]
+					ifFalse: [ String new ]) ]
+		decodeFilesWith: [ :znMimePart :filePath | 
+			parts
+				at: znMimePart fileName
+				add: znMimePart -> filePath ].
+	self assert: parts size equals: 4.
 	self assert: (parts at: 'extra') equals: 'my-extra'.
 	self assert: (parts at: 'info') equals: 'my-info'.
-	self assert: (parts at: 'file') fileName equals: 'foo.txt'.
-	self assert: (parts at: 'file') fullyQualifiedFilePath asFileReference contents equals: 'Zinc HTTP Components'.
+	self assert: (parts at: 'foo.txt') key fileName equals: 'foo.txt'.
+	self assert: (parts at: 'foo.txt') value asFileReference contents equals: 'Zinc HTTP Components'.
 	self assert: (parts at: 'afterfile') equals: 'afterfile', String crlf, 'foo'

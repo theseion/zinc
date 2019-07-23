@@ -1,5 +1,5 @@
 private
-parseMultiPartFileFieldWithMimePart: aMimePart boundary: aBoundary
+parseMultiPartFileFieldWithMimePart: aMimePart boundary: aBoundary decodeWith: aBlock
 	| fullBoundary file |
 	fullBoundary := String crlf asByteArray copyWithAll: aBoundary.
 	file := ZnConstants defaultTempDirectory / UUID new asString.
@@ -9,8 +9,6 @@ parseMultiPartFileFieldWithMimePart: aMimePart boundary: aBoundary
 			parseMultiPartFileFieldWithBoundary: fullBoundary
 			writeOn: writer ].
 	
-	^ WAExternalFile new
-		contentType: aMimePart contentType printString;
-		fileName: aMimePart fileName;
-		filePath: file pathString;
-		yourself
+	aBlock
+		value: aMimePart
+		value: file pathString
