@@ -5,7 +5,7 @@ parseMultiPartFileFieldWithMimePart: aMimePart boundary: aBoundary decodeWith: a
 	file := ZnConstants defaultTempDirectory / UUID new asString.
 	file binaryWriteStreamDo: [ :writer |
 		self
-			parseMultiPartFileFieldWithBoundary: fullBoundary
+			parseMultiPartFieldWithoutLengthWithBoundary: fullBoundary
 			writeOn: writer ].
 	
 	aBlock

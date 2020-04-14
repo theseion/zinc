@@ -13,21 +13,33 @@ partsDecodeWith: aDecoderBlock decodeFilesWith: aFileDecoderBlock
 		part := ZnMimePart new
 			headers: (ZnHeaders readFrom: stream);
 			yourself.
-		"The final boundary may be read as a header when
-		the last part was not a file part"
-		(part headers includesKey: endBoundary) ifFalse: [
-			(part fileName isEmptyOrNil not or: [
-				part contentType notNil and: [
-					part contentType isBinary ] ])
-						ifFalse: [
-							self
-								parseMultiPartFieldWithMimePart: part
-								decodeWith: aDecoderBlock ]
-						ifTrue: [
-							self
-								parseMultiPartFileFieldWithMimePart: part
-								boundary: fullBoundary
-								decodeWith: aFileDecoderBlock ] ].
+		"When a value is empty (see comment in #parseMultiPartFieldWithoutLengthWithBoundary:writeOn:)
+		and it is the last part then parsing headers will consumed the rest of the end boundary and the
+		stream will be at the end. In this case, the part will not have any headers"
+		(part hasHeaders not or: [
+			"The final boundary may be read as a header when
+			the last part was not a file part"
+			part headers includesKey: endBoundary ]) ifFalse: [
+				(part fileName isEmptyOrNil not or: [
+					part contentType notNil and: [
+						part contentType isBinary ] ])
+							ifFalse: [
+								((part contentDispositionValues includes: 'form-data') and: [
+									part contentLength isNil ])
+										ifTrue: [
+											self
+												parseMultiPartFieldWithoutLengthWithMimePart: part
+												boundary: fullBoundary
+												decodeWith: aDecoderBlock ]
+										ifFalse: [
+											self
+												parseMultiPartFieldWithMimePart: part
+												decodeWith: aDecoderBlock ] ]
+							ifTrue: [
+								self
+									parseMultiPartFileFieldWithMimePart: part
+									boundary: fullBoundary
+									decodeWith: aFileDecoderBlock ] ].
 		"Skip crlf"
 		stream atEnd ifFalse: [
 			stream skip: 2 ] ]
