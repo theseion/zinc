@@ -1,17 +1,20 @@
 private
 parseMultiPartFieldWithoutLengthWithBoundary: aBoundary writeOn: writer
-	| bufferSize buffer boundaryMarker |
+	| bufferSize rawBuffer buffer boundaryMarker |
 	"Can't simply use a larger buffer as we don't want to read past a boundary,
 	those bytes will belong to the next part"
 	bufferSize := aBoundary size.
-	buffer := ZnRingBuffer on: (ByteArray new: bufferSize).
+	rawBuffer := ByteArray new: bufferSize.
+	buffer := ZnRingBuffer on: rawBuffer.
 	boundaryMarker := aBoundary first.
 	
 	stream atEnd ifFalse: [
 		"#next:into: answers a copy of the buffer if not enough bytes could be read"
-			stream
-				next: bufferSize
-				into: buffer ].
+		"Use rawBuffer here so we can use the primitive to replace the bytes in the 
+		buffer directly"
+		stream
+			next: bufferSize
+			into: rawBuffer ].
 
 	[ (buffer
 		indexOf: boundaryMarker
@@ -35,10 +38,16 @@ parseMultiPartFieldWithoutLengthWithBoundary: aBoundary writeOn: writer
 								buffer moveStartTo: candidateIndex.
 								
 								"Fill the rest of the buffer"
+								"Use rawBuffer here so we can use the primitive to replace the bytes in the 
+								buffer directly"
+								rawBuffer := buffer
+									copyFrom: 1
+									to: bufferSize.
 								stream
 									next: candidateIndex - 1
-									into: buffer
+									into: rawBuffer
 									startingAt: bufferSize - candidateIndex + 2.
+								buffer initializeWithCollection: rawBuffer.
 								"If the candidate was really the first token of the boundary
 								then we now have loaded the full boundary into the buffer.
 								If not we have to check for the next boundary candidate as
@@ -49,8 +58,11 @@ parseMultiPartFieldWithoutLengthWithBoundary: aBoundary writeOn: writer
 					stream atEnd
 						ifFalse: [
 							"#next:into: answers a copy of the buffer if not enough bytes could be read"
+							"Use rawBuffer here so we can use the primitive to replace the bytes in the 
+							buffer directly"
 							stream
 								next: bufferSize
-								into: buffer.
+								into: rawBuffer.
+							buffer moveStartTo: 1.
 							false ]
 						ifTrue: [ true ] ] ] whileFalse

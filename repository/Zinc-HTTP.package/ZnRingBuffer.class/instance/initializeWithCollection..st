@@ -1,3 +1,4 @@
 initialization
 initializeWithCollection: aCollection
-	buffer := aCollection
+	buffer := aCollection.
+	offset := 0
