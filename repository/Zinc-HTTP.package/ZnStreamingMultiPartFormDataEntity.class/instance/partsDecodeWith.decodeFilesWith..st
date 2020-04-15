@@ -20,7 +20,7 @@ partsDecodeWith: aDecoderBlock decodeFilesWith: aFileDecoderBlock
 			"The final boundary may be read as a header when
 			the last part was not a file part"
 			part headers includesKey: endBoundary ]) ifFalse: [
-				(part fileName isEmptyOrNil not or: [
+				(part fileName notNil or: [
 					part contentType notNil and: [
 						part contentType isBinary ] ])
 							ifFalse: [
