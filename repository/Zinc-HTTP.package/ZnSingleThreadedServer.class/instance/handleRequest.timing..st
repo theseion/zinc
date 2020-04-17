@@ -7,7 +7,10 @@ handleRequest: request timing: timing
 	| response initialMilliseconds |
 	initialMilliseconds := Time millisecondClockValue.
 	ZnCurrentServerSession value: nil.
-	response := self handleRequestProtected: request.
+	response := self withMaximumEntitySizeDo: [ 
+		self withMaximumNumberOfDictionaryEntriesDo: [ 
+			self withDefaultCharacterEncoderDo: [
+				self handleRequestProtected: request ] ] ].
 	request method = #HEAD
 		ifTrue: [ response clearEntity ].
 	timing handlerDuration: (self logRequest: request response: response handledStarted: initialMilliseconds).
